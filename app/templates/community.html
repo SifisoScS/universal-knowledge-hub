@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block title %}Community - Universal Knowledge Hub{% endblock %}
+
+{% block content %}
+<section class="animate-fade-in mb-8">
+  <div class="max-w-4xl mx-auto">
+    <h2 class="text-3xl font-bold text-teal-600 dark:text-teal-400 mb-6">Community Hub</h2>
+    <p class="text-lg text-gray-600 dark:text-gray-300 mb-8">
+      Connect with others, share ideas, and collaborate on projects in our vibrant community.
+    </p>
+    <div class="space-y-6">
+      {% for post in posts %}
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
+        <h3 class="text-xl font-semibold">{{ post.title }}</h3>
+        <p class="text-gray-600 dark:text-gray-400 mb-2">Posted by {{ post.user.username }} on {{ post.created_at.strftime('%B %d, %Y') }}</p>
+        <p class="text-gray-800 dark:text-gray-200">{{ post.content | truncate(200) }}</p>
+        <a href="#" class="text-teal-600 hover:underline">Read More</a>
+      </div>
+      {% endfor %}
+    </div>
+    <a href="{{ url_for('main.community') }}" class="bg-teal-600 text-white hover:bg-teal-700 px-4 py-2 rounded-lg mt-4 inline-block">Post Something</a>
+  </div>
+</section>
+{% endblock %}

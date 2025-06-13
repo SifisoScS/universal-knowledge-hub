@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}{{ quiz.title }} - Universal Knowledge Hub{% endblock %}
+
+{% block content %}
+<section class="animate-fade-in mb-8">
+  <div class="max-w-4xl mx-auto">
+    <h2 class="text-3xl font-bold text-teal-600 dark:text-teal-400 mb-6">{{ quiz.title }}</h2>
+    <form id="quiz-form" method="POST" action="{{ url_for('knowledge.submit') }}">
+      <input type="hidden" name="quiz_id" value="{{ quiz.id }}">
+      {% for question in questions %}
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-4">
+        <h3 class="text-lg font-semibold mb-2">{{ question.text }}</h3>
+        {% for option in question.options %}
+        <label class="block mb-2">
+          <input type="radio" name="question_{{ question.id }}" value="{{ option.order_index }}" required>
+          {{ option.text }}
+        </label>
+        {% endfor %}
+      </div>
+      {% endfor %}
+      <button type="submit" class="bg-teal-600 text-white hover:bg-teal-700 px-6 py-3 rounded-lg">
+        Submit Quiz
+      </button>
+    </form>
+  </div>
+</section>
+{% endblock %}
