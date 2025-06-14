@@ -1,0 +1,64 @@
+/* Base Styles */
+html, body {
+  font-family: 'Inter', sans-serif;
+  background-color: #f7f7f7;
+  color: #333;
+}
+
+.dark html, .dark body {
+  background-color: #1a202c;
+  color: #e2e8f0;
+}
+
+/* Gradient Header */
+.bg-gradient-to-b {
+  background: linear-gradient(to bottom, #319795, #f56565);
+}
+
+.bg-gradient-to-r {
+  background: linear-gradient(to right, #319795, #f56565);
+}
+
+/* Chat Area */
+.chat-bubble {
+  transition: all 0.3s ease;
+}
+
+.chat-bubble:hover {
+  transform: scale(1.02);
+}
+
+/* Beadwork-Inspired Border */
+.border-beadwork {
+  border: 2px solid #d69e2e;
+  border-image: linear-gradient(45deg, #d69e2e, #e53e3e, #38a169, #3182ce) 1;
+}
+
+/* Earth Tones for Buttons */
+button.bg-teal-600 {
+  background-color: #2f855a;
+}
+
+button.bg-teal-600:hover {
+  background-color: #276749;
+}
+
+textarea, input {
+  background-color: #fefcbf;
+  border-color: #d69e2e;
+}
+
+.dark textarea, .dark input {
+  background-color: #2d3748;
+  border-color: #b7791f;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #d69e2e;
+  border-radius: 4px;
+}

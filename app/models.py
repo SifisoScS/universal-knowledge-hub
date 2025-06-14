@@ -1,6 +1,9 @@
+from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
-from app import db
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
+from app import db  # Import db from app/__init__.py
+
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -18,6 +21,14 @@ class User(db.Model, UserMixin):
     posts = db.relationship('CommunityPost', backref='user', lazy=True)
     events = db.relationship('Event', backref='creator', lazy=True)
     badges = db.relationship('UserBadge', backref='user', lazy=True)
+    user_questions = db.relationship('UserQuestion', backref='user', lazy=True)
+    learning_sessions = db.relationship('LearningSession', backref='user', lazy=True)
+
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
 
 class QuizCategory(db.Model):
     __tablename__ = 'quiz_categories'
@@ -72,7 +83,7 @@ class Score(db.Model):
     total_questions = db.Column(db.Integer, nullable=False)
     time_taken = db.Column(db.Integer)
     completed_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    
+
 class Badge(db.Model):
     __tablename__ = 'badges'
     id = db.Column(db.Integer, primary_key=True)
@@ -98,6 +109,7 @@ class CommunityPost(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     title = db.Column(db.String(100), nullable=False)
     content = db.Column(db.Text, nullable=False)
+    tags = db.Column(db.String(256))
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
 
@@ -109,3 +121,29 @@ class Event(db.Model):
     event_date = db.Column(db.DateTime, nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+class UserQuestion(db.Model):
+    __tablename__ = 'user_questions'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    question = db.Column(db.Text, nullable=False)
+    tags = db.Column(db.String(256))
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+class LearningSession(db.Model):
+    __tablename__ = 'learning_sessions'
+    id = db.Column(db.Integer, primary_key=True)
+    theme = db.Column(db.String(100), nullable=False)
+    question = db.Column(db.Text, nullable=False)
+    learning = db.Column(db.Text, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    
+class SavedWisdom(db.Model):
+    __tablename__ = 'saved_wisdom'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    question = db.Column(db.String(500), nullable=False)
+    response = db.Column(db.Text, nullable=False)
+    tags = db.Column(db.String(200))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)    

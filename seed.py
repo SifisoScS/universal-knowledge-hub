@@ -1,37 +1,41 @@
 from app import create_app, db
-from app.models import User, QuizCategory, Quiz, Question, QuestionOption, Badge
+from app.models import User, CommunityPost, UserQuestion
+from werkzeug.security import generate_password_hash
+from datetime import datetime
 
-app = create_app()
-with app.app_context():
-    # Create admin user
-    admin = User(username='admin', email='admin@imbizo.com', password='hashed_password', is_admin=True)
-    db.session.add(admin)
+def seed_data():
+    db.drop_all()
+    db.create_all()
 
-    # Create category
-    category = QuizCategory(name='General Knowledge', description='Test your trivia!', icon='fa-brain')
-    db.session.add(category)
+    user1 = User(
+        username='user1',
+        email='user1@example.com',
+        created_at=datetime.utcnow()
+    )
+    user1.set_password('password123')
+    db.session.add(user1)
     db.session.commit()
 
-    # Create quiz
-    quiz = Quiz(title='Trivia Challenge', category_id=category.id, created_by=admin.id)
-    db.session.add(quiz)
+    post1 = CommunityPost(
+        user_id=user1.id,
+        title='How can we heal with herbs?',
+        content='Exploring traditional and modern uses of healing plants.',
+        tags='Nature,Culture,Khoisan',
+        created_at=datetime.utcnow()
+    )
+    db.session.add(post1)
+
+    question1 = UserQuestion(
+        user_id=user1.id,
+        question='What are healing herbs?',
+        tags='Nature,Culture,Khoisan',
+        created_at=datetime.utcnow()
+    )
+    db.session.add(question1)
     db.session.commit()
 
-    # Create question
-    question = Question(quiz_id=quiz.id, text='What is the capital of France?', difficulty=1, created_by=admin.id)
-    db.session.add(question)
-    db.session.commit()
-
-    # Create options
-    options = [
-        QuestionOption(question_id=question.id, text='Paris', is_correct=True, order_index=1),
-        QuestionOption(question_id=question.id, text='London', is_correct=False, order_index=2),
-        QuestionOption(question_id=question.id, text='Berlin', is_correct=False, order_index=3),
-        QuestionOption(question_id=question.id, text='Madrid', is_correct=False, order_index=4)
-    ]
-    db.session.add_all(options)
-
-    # Create badge
-    badge = Badge(name='Trivia Master', description='Score 100% on a quiz', points=100, category_id=category.id)
-    db.session.add(badge)
-    db.session.commit()
+if __name__ == '__main__':
+    app = create_app()
+    with app.app_context():
+        seed_data()
+        print("Database seeded successfully!")

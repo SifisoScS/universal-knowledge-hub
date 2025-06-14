@@ -27,6 +27,7 @@ def create_app():
     from app.routes.main import main_bp
     from app.routes.knowledge import knowledge_bp
     from app.routes.leaderboard import leaderboard_bp
+    
     app.register_blueprint(auth_bp)
     app.register_blueprint(main_bp)
     app.register_blueprint(knowledge_bp)
