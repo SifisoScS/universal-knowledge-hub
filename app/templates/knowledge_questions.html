@@ -6,7 +6,7 @@
 <section class="animate-fade-in mb-8">
   <div class="max-w-4xl mx-auto">
     <h2 class="text-3xl font-bold text-teal-600 dark:text-teal-400 mb-6">{{ quiz.title }}</h2>
-    <form id="quiz-form" method="POST" action="{{ url_for('knowledge.submit') }}">
+    <form id="quiz-form" method="POST" action="{{ url_for('main.start_quizzing') }}">
       <input type="hidden" name="quiz_id" value="{{ quiz.id }}">
       {% for question in questions %}
       <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md mb-4">

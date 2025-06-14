@@ -1,46 +1,108 @@
-from flask import Blueprint, render_template, request, jsonify
-from flask_login import login_required, current_user
-from app.models import db, Quiz, Question, Score
+{% extends "base.html" %}
 
-knowledge_bp = Blueprint('knowledge', __name__)
+{% block title %}Start Quizzing - SISONKE{% endblock %}
 
-@knowledge_bp.route('/knowledge')
-@login_required
-def knowledge():
-    quizzes = Quiz.query.filter_by(is_active=True).all()
-    return render_template('knowledge.html', quizzes=quizzes)
+{% block content %}
+<section class="animate-fade-in bg-gradient-to-b from-teal-500 to-coral-500 min-h-screen">
+  <!-- Header -->
+  <div class="max-w-4xl mx-auto px-4 py-8 text-center text-white">
+    <h1 class="text-4xl font-bold mb-4">Ask What You Wonder</h1>
+    <p class="text-xl mb-6">A safe space to explore Life, Nature, Society, Science, Culture — and everything in between.</p>
+  </div>
 
-@knowledge_bp.route('/knowledge/<int:quiz_id>')
-@login_required
-def take_quiz(quiz_id):
-    quiz = Quiz.query.get_or_404(quiz_id)
-    questions = quiz.questions
-    return render_template('knowledge_questions.html', quiz=quiz, questions=questions)
+  <!-- Category Carousel -->
+  <div class="max-w-4xl mx-auto px-4 mb-6">
+    <div class="flex overflow-x-auto space-x-4 pb-4">
+      {% for category in categories %}
+        <button class="flex-shrink-0 px-4 py-2 bg-white text-teal-600 rounded-full shadow hover:bg-gray-100 transition-all" onclick="suggestPrompt('{{ category }}')">
+          {{ category }}
+        </button>
+      {% endfor %}
+    </div>
+  </div>
 
-@knowledge_bp.route('/knowledge/submit', methods=['POST'])
-@login_required
-def submit():
-    quiz_id = int(request.form.get('quiz_id'))
-    quiz = Quiz.query.get_or_404(quiz_id)
-    questions = quiz.questions
-    score = 0
-    correct_answers = 0
-    
-    for question in questions:
-        user_answer = request.form.get(f'question_{question.id}')
-        if user_answer and int(user_answer) == next(opt.order_index for opt in question.options if opt.is_correct):
-            score += 1
-            correct_answers += 1
-    
-    score_record = Score(
-        user_id=current_user.id,
-        quiz_id=quiz_id,
-        score=score,
-        correct_answers=correct_answers,
-        total_questions=len(questions),
-        time_taken=request.form.get('time_taken', 0, type=int)
-    )
-    db.session.add(score_record)
-    db.session.commit()
-    
-    return jsonify({'score': score, 'total': len(questions)})
+  <!-- Chat Area -->
+  <div class="max-w-4xl mx-auto px-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-beadwork">
+    {% if response %}
+      <!-- Ayo's Response -->
+      <div class="mb-6">
+        <div class="flex items-start mb-2">
+          <img alt="Ayo's avatar" class="h-10 w-10 rounded-full" src="/static/images/ayo.png" width="40" height="40"/>
+          <div class="ml-3 bg-teal-100 dark:bg-teal-900 p-4 rounded-lg chat-bubble">
+            <p class="text-teal-800 dark:text-teal-200 font-medium">{{ response.greeting }}</p>
+            <p class="text-gray-800 dark:text-gray-200 mt-2">{{ response.answer }}</p>
+            {% if response.community_context %}
+              <p class="text-teal-600 dark:text-teal-400 mt-2">{{ response.community_context }}</p>
+            {% endif %}
+            <p class="text-teal-600 dark:text-teal-400 mt-2 italic">{{ response.proverb }}</p>
+            <p class="text-gray-600 dark:text-gray-400 mt-2">{{ response.follow_up }}</p>
+            <p class="text-gray-500 dark:text-gray-400 mt-2">{{ response.closer }}</p>
+            <div class="mt-4 flex items-center space-x-4">
+              <a href="{{ response.community_link }}" class="text-teal-600 dark:text-teal-400 hover:underline">Join community thread</a>
+              <button class="text-teal-600 dark:text-teal-400 hover:underline" onclick="saveResponse('{{ response.question | safe }}', '{{ response.answer | safe }}', '{{ response.tags | safe }}')">Save this wisdom</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+
+    <!-- Input Form -->
+    <form action="{{ url_for('main.start_quizzing') }}" method="POST" class="mt-6">
+      <div class="flex flex-col space-y-4">
+        <textarea id="question" name="question" placeholder="What have you been thinking about lately?" required class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-teal-500 dark:bg-gray-700 dark:text-white" rows="3"></textarea>
+        <div class="flex flex-wrap gap-2">
+          {% for category in categories %}
+            <label class="inline-flex items-center cursor-pointer">
+              <input type="checkbox" name="tags[]" value="{{ category }}" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500 dark:bg-gray-600"/>
+              <span class="ml-2 text-gray-700 dark:text-gray-300">{{ category }}</span>
+            </label>
+          {% endfor %}
+        </div>
+        <div class="flex justify-between items-center">
+          <button type="button" class="text-teal-600 hover:underline" onclick="generatePrompt()">Inspire me 🌱</button>
+          <button type="submit" class="px-6 py-3 bg-teal-600 text-white rounded-lg shadow hover:bg-teal-700 transition-all">Ask Ayo</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<script>
+function suggestPrompt(category) {
+  const prompts = {
+    Science: "Why do stars twinkle?",
+    Nature: "How do trees talk to each other?",
+    Life: "What makes us happy?",
+    Society: "How do communities heal?",
+    Culture: "Why do we tell stories?",
+    Art: "What is beauty?",
+    Technology: "How will AI shape our future?",
+    Random: "Why do we laugh?",
+    Khoisan: "What do Khoisan stories teach us?",
+    Zulu: "How does ubuntu shape our lives?"
+  };
+  document.getElementById('question').value = prompts[category] || "What’s on your mind?";
+}
+
+function generatePrompt() {
+  const randomPrompts = [
+    "What’s the oldest tree on Earth?",
+    "Why do we dream?",
+    "How did music begin?",
+    "What is ubuntu?",
+    "What are Khoisan healing methods?"
+  ];
+  document.getElementById('question').value = randomPrompts[Math.floor(Math.random() * randomPrompts.length)];
+}
+
+function saveResponse(question, response, tags) {
+  fetch('{{ url_for('main.save_wisdom') }}', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: `question=${encodeURIComponent(question)}&response=${encodeURIComponent(response)}&tags=${encodeURIComponent(tags)}`
+  }).then(res => res.json()).then(data => {
+    alert(data.message');
+  }).catch(() => alert('Error saving wisdom'));
+}
+</script>
+{% endblock %}

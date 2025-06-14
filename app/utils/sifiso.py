@@ -1,19 +1,35 @@
-from flask import Blueprint, request, jsonify
+from app.models import UserQuestion, CommunityPost
+from app import db
+from datetime import datetime
 
-sifiso_bp = Blueprint('sifiso', __name__, url_prefix='/api')
+class SifisoAI:
+    def __init__(self, user_id):
+        self.user_id = user_id
 
-@sifiso_bp.route('/sifiso', methods=['POST'])
-def sifiso():
-    data = request.get_json()
-    message = data.get('message', '').lower()
-    
-    if 'quiz' in message or 'knowledge' in message:
-        reply = 'Ready to test your knowledge? Head to the Knowledge Challenges tab!'
-    elif 'community' in message:
-        reply = 'Join our vibrant community hub to share ideas and collaborate!'
-    elif 'event' in message:
-        reply = 'Check out upcoming events to connect with others!'
-    else:
-        reply = "I'm Sifiso, your assistant. Ask about knowledge challenges, community, events, or more!"
-    
-    return jsonify({'reply': reply})
+    def respond(self, question, tags):
+        # Query CommunityPost for related wisdom
+        related_posts = CommunityPost.query.filter(CommunityPost.tags.ilike(f'%{tags}%')).limit(3).all()
+        community_context = "\n".join([f"- {post.title}: {post.content[:100]}..." for post in related_posts]) if related_posts else "No community insights yet. Start a thread!"
+
+        # Structured response for knowledge.html
+        return {
+            "question": question,
+            "greeting": f"Ayo greets you! Your question '{question}' sparks wisdom.",
+            "answer": f"Exploring '{question}' with tags '{tags}', here's a thought: Knowledge shared grows like a baobab tree.",
+            "community_context": community_context,
+            "proverb": "Umuntu ngumuntu ngabantu: A person is a person through others.",
+            "follow_up": "What else do you wonder about this topic?",
+            "closer": "Together, we learn and rise!",
+            "community_link": f"/community?topic={tags.split(',')[0]}" if tags else "/community",
+            "tags": tags
+        }
+
+    def save_question(self, question, tags):
+        user_question = UserQuestion(
+            user_id=self.user_id,
+            question=question,
+            tags=tags,
+            created_at=datetime.utcnow()
+        )
+        db.session.add(user_question)
+        db.session.commit()
