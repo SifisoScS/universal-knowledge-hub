@@ -1,98 +1,79 @@
 {% extends "base.html" %}
 
-{% block title %}Start Quizzing - SISONKE{% endblock %}
+{% block title %}Ayo's Wisdom - SISONKE{% endblock %}
 
 {% block content %}
-<section class="animate-fade-in bg-gradient-to-b from-teal-500 to-coral-500 min-h-screen">
+<div class="flex flex-col h-screen bg-gradient-to-b from-teal-500 to-coral-500 dark:bg-gradient-to-b dark:from-gray-900 dark:to-gray-800">
   <!-- Header -->
-  <div class="max-w-4xl mx-auto px-4 py-8 text-center text-white">
-    <h1 class="text-4xl font-bold mb-4">Ask What You Wonder</h1>
-    <p class="text-xl mb-6">A safe space to explore Life, Nature, Society, Science, Culture — and everything in between.</p>
+  <header class="p-4 text-center text-white border-b border-beadwork">
+    <h1 class="text-2xl font-bold">Chat with Ayo</h1>
+    <p class="text-sm">Explore wisdom together in the spirit of ubuntu.</p>
+  </header>
+
+  <!-- Chat Container -->
+  <div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-4">
+    {% for item in history %}
+      <!-- User Message -->
+      <div class="flex justify-end items-start space-x-2 animate-fade-in">
+        <div class="bg-coral-100 dark:bg-coral-900 p-3 rounded-2xl max-w-[70%] shadow-sm">
+          <p class="text-coral-800 dark:text-coral-200 font-medium">{{ item.question }}</p>
+          <p class="text-gray-500 dark:text-gray-400 text-xs mt-1">{{ item.created_at.strftime('%H:%M, %b %d, %Y') }}</p>
+        </div>
+        <img alt="User avatar" class="h-8 w-8 rounded-full" src="/static/images/user.png" width="32" height="32"/>
+      </div>
+      <!-- Ayo's Response -->
+      <div class="flex justify-start items-start space-x-2 animate-fade-in">
+        <img alt="Ayo's avatar" class="h-8 w-8 rounded-full" src="/static/images/ayo.png" width="32" height="32"/>
+        <div class="bg-teal-100 dark:bg-teal-900 p-3 rounded-2xl max-w-[70%] shadow-sm">
+          <p class="text-teal-800 dark:text-teal-200 font-medium">{{ item.response.greeting | safe }}</p>
+          <p class="text-gray-800 dark:text-gray-200 mt-1">{{ item.response.answer | safe }}</p>
+          <p class="text-gray-800 dark:text-gray-200 mt-1">{{ item.response.community_context | safe }}</p>
+          <p class="text-teal-600 dark:text-teal-400 mt-1 italic">{{ item.response.proverb | safe }}</p>
+          <p class="text-gray-600 dark:text-gray-400 mt-1">{{ item.response.follow_up | safe }}</p>
+          <p class="text-gray-600 dark:text-gray-400 mt-1">{{ item.response.closer | safe }}</p>
+          <div class="mt-2 flex items-center space-x-2 text-sm">
+            <a href="{{ item.response.community_link }}" class="text-teal-600 dark:text-teal-400 hover:underline">Join thread</a>
+            <button class="text-teal-600 dark:text-teal-400 hover:underline" onclick="saveResponse('{{ item.question | safe }}', '{{ item.response.answer | safe }}', '')">Save wisdom</button>
+          </div>
+          <p class="text-gray-500 dark:text-gray-400 text-xs mt-1">{{ item.created_at.strftime('%H:%M, %b %d, %Y') }}</p>
+        </div>
+      </div>
+    {% endfor %}
   </div>
 
-  <!-- Category Carousel -->
-  <div class="max-w-4xl mx-auto px-4 mb-6">
-    <div class="flex overflow-x-auto space-x-4 pb-4">
-      {% for category in categories %}
-        <button class="flex-shrink-0 px-4 py-2 bg-white text-teal-600 rounded-full shadow hover:bg-gray-100 transition-all" onclick="suggestPrompt('{{ category }}')">
-          {{ category }}
-        </button>
-      {% endfor %}
+  <!-- Input Area -->
+  <div class="p-4 bg-white dark:bg-gray-800 border-t border-beadwork">
+    <div class="flex items-center space-x-2">
+      <button id="inspire-me" class="text-teal-600 dark:text-teal-400 hover:underline text-sm">Inspire me</button>
+      <input id="question" name="question" placeholder="Ask Ayo anything..." required class="flex-1 px-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+      <button id="send-btn" type="submit" class="px-3 py-2 bg-teal-600 text-white rounded-full hover:bg-teal-700 transition-all text-sm">Send</button>
     </div>
   </div>
+</div>
 
-  <!-- Chat Area -->
-  <div class="max-w-4xl mx-auto px-4 bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 border-beadwork">
-    {% if response %}
-      <!-- Ayo's Response -->
-      <div class="mb-6">
-        <div class="flex items-start mb-2">
-          <img alt="Ayo's avatar" class="h-10 w-10 rounded-full" src="/static/images/ayo.png" width="40" height="40"/>
-          <div class="ml-3 bg-teal-100 dark:bg-teal-900 p-4 rounded-lg chat-bubble">
-            <p class="text-teal-800 dark:text-teal-200 font-medium">{{ response.greeting }}</p>
-            <p class="text-gray-800 dark:text-gray-200 mt-2">{{ response.answer }}</p>
-            {% if response.community_context %}
-              <p class="text-teal-600 dark:text-teal-400 mt-2">{{ response.community_context }}</p>
-            {% endif %}
-            <p class="text-teal-600 dark:text-teal-400 mt-2 italic">{{ response.proverb }}</p>
-            <p class="text-gray-600 dark:text-gray-400 mt-2">{{ response.follow_up }}</p>
-            <p class="text-gray-500 dark:text-gray-400 mt-2">{{ response.closer }}</p>
-            <div class="mt-4 flex items-center space-x-4">
-              <a href="{{ response.community_link }}" class="text-teal-600 dark:text-teal-400 hover:underline">Join community thread</a>
-              <button class="text-teal-600 dark:text-teal-400 hover:underline" onclick="saveResponse('{{ response.question | safe }}', '{{ response.answer | safe }}', '{{ response.tags | safe }}')">Save this wisdom</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    {% endif %}
-
-    <!-- Input Form -->
-    <form action="{{ url_for('main.start_quizzing') }}" method="POST" class="mt-6">
-      <div class="flex flex-col space-y-4">
-        <textarea id="question" name="question" placeholder="What have you been thinking about lately?" required class="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-teal-500 dark:bg-gray-700 dark:text-white" rows="3"></textarea>
-        <div class="flex flex-wrap gap-2">
-          {% for category in categories %}
-            <label class="inline-flex items-center cursor-pointer">
-              <input type="checkbox" name="tags[]" value="{{ category }}" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500 dark:bg-gray-600"/>
-              <span class="ml-2 text-gray-700 dark:text-gray-300">{{ category }}</span>
-            </label>
-          {% endfor %}
-        </div>
-        <div class="flex justify-between items-center">
-          <button type="button" class="text-teal-600 hover:underline" onclick="generatePrompt()">Inspire me 🌱</button>
-          <button type="submit" class="px-6 py-3 bg-teal-600 text-white rounded-lg shadow hover:bg-teal-700 transition-all">Ask Ayo</button>
-        </div>
-      </div>
-    </form>
-  </div>
-</section>
+<style>
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+.border-beadwork {
+  border-image: url('/static/images/beadwork.png') 30 stretch;
+}
+</style>
 
 <script>
-function suggestPrompt(category) {
-  const prompts = {
-    Science: "Why do stars twinkle?",
-    Nature: "How do trees talk to each other?",
-    Life: "What makes us happy?",
-    Society: "How do communities heal?",
-    Culture: "Why do we tell stories?",
-    Art: "What is beauty?",
-    Technology: "How will AI shape our future?",
-    Random: "Why do we laugh?",
-    Khoisan: "What do Khoisan stories teach us?",
-    Zulu: "How does ubuntu shape our lives?"
-  };
-  document.getElementById('question').value = prompts[category] || "What’s on your mind?";
-}
-
 function generatePrompt() {
-  const randomPrompts = [
+  const prompts = [
     "What’s the oldest tree on Earth?",
     "Why do we dream?",
     "How did music begin?",
     "What is ubuntu?",
     "What are Khoisan healing methods?"
   ];
-  document.getElementById('question').value = randomPrompts[Math.floor(Math.random() * randomPrompts.length)];
+  document.getElementById('question').value = prompts[Math.floor(Math.random() * prompts.length)];
 }
 
 function saveResponse(question, response, tags) {
@@ -100,9 +81,95 @@ function saveResponse(question, response, tags) {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `question=${encodeURIComponent(question)}&response=${encodeURIComponent(response)}&tags=${encodeURIComponent(tags)}`
-  }).then(res => res.json()).then(data => {
-    alert(data.message');
-  }).catch(() => alert('Error saving wisdom'));
+  })
+  .then(res => res.json())
+  .then(data => alert(data.message))
+  .catch(err => {
+    console.error('Error saving wisdom:', err);
+    alert('Error saving wisdom');
+  });
 }
+
+document.getElementById('inspire-me').addEventListener('click', generatePrompt);
+
+document.getElementById('send-btn').addEventListener('click', (e) => {
+  e.preventDefault();
+  const questionInput = document.getElementById('question');
+  const question = questionInput.value.trim();
+  if (!question) return;
+
+  const chatContainer = document.getElementById('chat-container');
+  const formData = new FormData();
+  formData.append('question', question);
+
+  // Add User Message
+  const userBubble = document.createElement('div');
+  userBubble.className = 'flex justify-end items-start space-x-2 animate-fade-in';
+  userBubble.innerHTML = `
+    <div class="bg-coral-100 dark:bg-coral-900 p-3 rounded-2xl max-w-[70%] shadow-sm">
+      <p class="text-coral-800 dark:text-coral-200 font-medium">${question}</p>
+      <p class="text-gray-500 dark:text-gray-400 text-xs mt-1">${new Date().toLocaleString('en-US', { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric', year: 'numeric' })}</p>
+    </div>
+    <img alt="User avatar" class="h-8 w-8 rounded-full" src="/static/images/user.png" width="32" height="32"/>
+  `;
+  chatContainer.appendChild(userBubble);
+
+  // Add Typing Indicator
+  const typingIndicator = document.createElement('div');
+  typingIndicator.className = 'flex justify-start items-start space-x-2';
+  typingIndicator.innerHTML = `
+    <img alt="Ayo's avatar" class="h-8 w-8 rounded-full" src="/static/images/ayo.png" width="32" height="32"/>
+    <div class="bg-teal-100 dark:bg-teal-900 p-3 rounded-2xl max-w-[70%] shadow-sm">
+      <p class="text-gray-500 dark:text-gray-400 text-sm">Ayo is typing...</p>
+    </div>
+  `;
+  chatContainer.appendChild(typingIndicator);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+
+  // Submit Question
+  fetch('{{ url_for('main.start_quizzing') }}', {
+    method: 'POST',
+    body: formData,
+    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+  })
+  .then(res => {
+    console.log('Response status:', res.status);
+    if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+    return res.text();
+  })
+  .then(text => {
+    console.log('Raw response:', text);
+    return JSON.parse(text);
+  })
+  .then(data => {
+    chatContainer.removeChild(typingIndicator);
+    const ayoBubble = document.createElement('div');
+    ayoBubble.className = 'flex justify-start items-start space-x-2 animate-fade-in';
+    ayoBubble.innerHTML = `
+      <img alt="Ayo's avatar" class="h-8 w-8 rounded-full" src="/static/images/ayo.png" width="32" height="32"/>
+      <div class="bg-teal-100 dark:bg-teal-900 p-3 rounded-2xl max-w-[70%] shadow-sm">
+        <p class="text-teal-800 dark:text-teal-200 font-medium">${data.response.greeting}</p>
+        <p class="text-gray-800 dark:text-gray-200 mt-1">${data.response.answer}</p>
+        <p class="text-gray-800 dark:text-gray-200 mt-1">${data.response.community_context}</p>
+        <p class="text-teal-600 dark:text-teal-400 mt-1 italic">${data.response.proverb}</p>
+        <p class="text-gray-600 dark:text-gray-400 mt-1">${data.response.follow_up}</p>
+        <p class="text-gray-600 dark:text-gray-400 mt-1">${data.response.closer}</p>
+        <div class="mt-2 flex items-center space-x-2 text-sm">
+          <a href="${data.response.community_link}" class="text-teal-600 dark:text-teal-400 hover:underline">Join thread</a>
+          <button class="text-teal-600 dark:text-teal-400 hover:underline" onclick="saveResponse('${data.question}', '${data.response.answer}', '')">Save wisdom</button>
+        </div>
+        <p class="text-gray-500 dark:text-gray-400 text-xs mt-1">${data.created_at}</p>
+      </div>
+    `;
+    chatContainer.appendChild(ayoBubble);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    questionInput.value = '';
+  })
+  .catch(err => {
+    chatContainer.removeChild(typingIndicator);
+    console.error('AJAX error:', err.message);
+    alert('Error submitting question: ' + err.message);
+  });
+});
 </script>
 {% endblock %}

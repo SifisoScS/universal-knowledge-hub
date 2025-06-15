@@ -74,7 +74,7 @@ class SifisoAI:
         # Structured response
         return {
             "question": question,
-            "greeting": f"🧠 Ayo greets you! Your question '**{question}**' sparks wisdom.",
+            "greeting": "Ayo greets you!",
             "answer": f"### 🌐 Web Insights\n{web_context}",
             "community_context": f"### 🗣️ Community Wisdom\n{community_context}",
             "proverb": "🪶 *Umuntu ngumuntu ngabantu:* A person is a person through others.",

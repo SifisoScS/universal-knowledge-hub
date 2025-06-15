@@ -2,8 +2,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-from app import db  # Import db from app/__init__.py
-
+from app import db
 
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
@@ -129,6 +128,14 @@ class UserQuestion(db.Model):
     question = db.Column(db.Text, nullable=False)
     tags = db.Column(db.String(256))
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    responses = db.relationship('UserResponse', backref='question', lazy=True)
+
+class UserResponse(db.Model):
+    __tablename__ = 'user_responses'
+    id = db.Column(db.Integer, primary_key=True)
+    question_id = db.Column(db.Integer, db.ForeignKey('user_questions.id'), nullable=False)
+    response = db.Column(db.Text, nullable=False)  # JSON string of SifisoAI response
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 class LearningSession(db.Model):
     __tablename__ = 'learning_sessions'
@@ -138,7 +145,7 @@ class LearningSession(db.Model):
     learning = db.Column(db.Text, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    
+
 class SavedWisdom(db.Model):
     __tablename__ = 'saved_wisdom'
     id = db.Column(db.Integer, primary_key=True)
@@ -146,4 +153,4 @@ class SavedWisdom(db.Model):
     question = db.Column(db.String(500), nullable=False)
     response = db.Column(db.Text, nullable=False)
     tags = db.Column(db.String(200))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)

@@ -1,9 +1,10 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify
 from flask_login import login_required, current_user
-from app.models import Score, CommunityPost, Event, UserQuestion, SavedWisdom
+from app.models import Score, CommunityPost, Event, UserQuestion, SavedWisdom, UserResponse
 from app import db
 from app.utils.sifiso import SifisoAI
 from datetime import datetime
+import json
 
 main_bp = Blueprint('main', __name__)
 
@@ -18,20 +19,71 @@ def index():
 def start_quizzing():
     sifiso = SifisoAI(user_id=current_user.id)
     categories = ['Science', 'Nature', 'Life', 'Society', 'Culture', 'Art', 'Technology', 'Random', 'Khoisan', 'Zulu']
-    
+    history = []
+
+    # Fetch chat history for authenticated user
+    if current_user.is_authenticated:
+        questions = UserQuestion.query.filter_by(user_id=current_user.id).order_by(UserQuestion.created_at.asc()).all()
+        for q in questions:
+            responses = UserResponse.query.filter_by(question_id=q.id).all()
+            history.extend([{
+                'question': q.question,
+                'response': json.loads(r.response),
+                'tags': q.tags or '',
+                'created_at': q.created_at
+            } for r in responses])
+
     if request.method == 'POST':
         question = request.form.get('question')
-        tags_list = request.form.getlist('tags[]') or request.form.getlist('tags')
-        tags = ','.join(tags_list)
-        print(f"Received question: {question}, tags: {tags}")  # Debug
-        if question:
-            response = sifiso.respond(question, tags)
-            sifiso.save_question(question, tags)
-            flash('You’ve just unlocked a Thought Thread!', 'success')
-            return render_template('knowledge.html', response=response, categories=categories)
-        flash('Please ask a question.', 'error')
-    
-    return render_template('knowledge.html', categories=categories)
+        print(f"Received question: {question}")  # Debug
+
+        if not question:
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'error': 'Please ask a question.'}), 400
+            flash('Please ask a question.', 'error')
+            return render_template('knowledge.html', categories=categories, history=history)
+
+        # Generate and save response
+        response = sifiso.respond(question, '')  # No tags
+        sifiso.save_question(question, '')  # No tags
+
+        # Save to database
+        user_question = UserQuestion(
+            user_id=current_user.id,
+            question=question,
+            tags='',
+            created_at=datetime.utcnow()
+        )
+        db.session.add(user_question)
+        db.session.flush()  # Get ID
+        user_response = UserResponse(
+            question_id=user_question.id,
+            response=json.dumps(response),
+            created_at=datetime.utcnow()
+        )
+        db.session.add(user_response)
+        db.session.commit()
+
+        # Return JSON for AJAX
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify({
+                'question': question,
+                'response': response,
+                'tags': '',
+                'created_at': datetime.utcnow().strftime('%H:%M, %b %d, %Y')
+            })
+
+        # Fallback for non-AJAX (rare)
+        history.append({
+            'question': question,
+            'response': response,
+            'tags': '',
+            'created_at': datetime.utcnow()
+        })
+        flash('You’ve just unlocked a Thought Thread!', 'success')
+        return render_template('knowledge.html', categories=categories, history=history)
+
+    return render_template('knowledge.html', categories=categories, history=history)
 
 @main_bp.route('/save_wisdom', methods=['POST'])
 @login_required
